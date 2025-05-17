@@ -64,15 +64,6 @@ export default function Page() {
     reader.readAsDataURL(file);
   };
 
-  // تاریخچه کامل مکالمه برای ارسال به سرور
-  const getFullHistory = () =>
-    aiMessages
-      .filter((m) => m.role === "user" || m.role === "ai")
-      .map((m) => ({
-        role: m.role === "user" ? "user" : "assistant",
-        content: m.text,
-      }));
-
   // پیام خوش‌آمدگویی هوشمند فقط یکبار
   useEffect(() => {
     if (aiMessages.length === 0) {
@@ -97,7 +88,6 @@ export default function Page() {
 
   // کنترل استریم و دکمه استاپ
   const aiStreamController = useRef<AbortController | null>(null);
-  const [isStopped, setIsStopped] = useState(false);
 
   useEffect(() => {
     if (user?.email) {
@@ -106,11 +96,17 @@ export default function Page() {
         .then((data) => {
           if (data.history)
             setAiMessages(
-              data.history.map((m: any) => ({
-                role: m.role,
-                text: m.content,
-                time: m.createdAt,
-              }))
+              data.history.map(
+                (m: {
+                  role: MessageRole;
+                  content: string;
+                  createdAt: string;
+                }) => ({
+                  role: m.role,
+                  text: m.content,
+                  time: m.createdAt,
+                })
+              )
             );
         });
     }
@@ -118,7 +114,6 @@ export default function Page() {
 
   const sendAiMessage = async () => {
     if (!aiInput.trim() || !user) return;
-    setIsStopped(false);
     addMessage({ role: "user", text: aiInput });
     setAiInput("");
     setAiLoading(true);
@@ -132,22 +127,22 @@ export default function Page() {
       const data = await res.json();
       if (data.response) {
         setAiMessages(
-          data.history.map((m: any) => ({
-            role: m.role,
-            text: m.content,
-            time: m.createdAt,
-          }))
+          data.history.map(
+            (m: { role: MessageRole; content: string; createdAt: string }) => ({
+              role: m.role,
+              text: m.content,
+              time: m.createdAt,
+            })
+          )
         );
       }
     } catch {}
     setAiLoading(false);
     aiStreamController.current = null;
-    setIsStopped(false);
   };
 
   // دکمه استاپ
   const stopAI = () => {
-    setIsStopped(true);
     aiStreamController.current?.abort();
     setAiLoading(false);
   };

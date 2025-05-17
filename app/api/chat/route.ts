@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../lib/prisma";
 
-// Helper: get user from session/cookie (for demo, use email in body)
-async function getUserFromRequest(req: NextRequest) {
-  const { email } = await req.json();
-  if (!email) return null;
-  return prisma.user.findUnique({ where: { email } });
-}
-
 export async function POST(req: NextRequest) {
   const { email, message } = await req.json();
   const user = await prisma.user.findUnique({ where: { email } });
